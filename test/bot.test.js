@@ -6,7 +6,7 @@ import { Store } from '../src/store.js';
 import { FraudRegistry } from '../src/fraud.js';
 import { parseProof, findPhones } from '../src/parser.js';
 
-const baseCfg = JSON.parse(fs.readFileSync(new URL('../config.example.json', import.meta.url)));
+const baseCfg = JSON.parse(fs.readFileSync(new URL('./fixture-config.json', import.meta.url)));
 baseCfg.hours = null;
 
 const MPESA = 'Confirmado DK47HJ2X9P. Transferiste 50.00MT para 841234567 - JOAO MABUNDA aos 22/11/26 as 10:15. Taxa foi 0.00MT. O teu saldo M-Pesa e 1,200.00MT.';

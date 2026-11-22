@@ -139,6 +139,10 @@ export const T = {
     '• *!banir 84XXXXXXX motivo* — lista negra + remove dos grupos + alerta',
     '• *!desbanir 84XXXXXXX* · *!denuncias*',
     '',
+    '*Assinatura*',
+    '• *assinatura* — plano, validade, grupos e como renovar',
+    '• *!desativar* (no grupo) — liberta o lugar para outro grupo',
+    '',
     '🤖 Também podes falar com a IA: "@bot muda o preço do 2GB para 85"',
 ].join('\n'),
 };

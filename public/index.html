@@ -3,14 +3,231 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BotMegas — Painel</title>
-  <meta name="theme-color" content="#0b1f17">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b1f17'/><path d='M8 22l5-6 4 3 7-9' stroke='%23c6f432' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-  <link rel="stylesheet" href="/style.css">
+  <title>BotMegas | O bot que atende o teu grupo de megas</title>
+  <meta name="description" content="Bot de WhatsApp para revendedores de megas em Moçambique. Lê comprovativos M-Pesa e e-Mola, organiza a fila, confirma entregas e bloqueia burladores.">
+  <meta name="theme-color" content="#2436C8">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%232436C8'/><path d='M9 21.5V12l7 6 7-6v9.5' stroke='%23FFC83D' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-  <div id="app"><div class="boot">A carregar…</div></div>
-  <div id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js" type="module"></script>
+  <header class="nav">
+    <a class="wordmark" href="/" aria-label="BotMegas, início">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M9 21.5V12l7 6 7-6v9.5" stroke="#FFC83D" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>botmegas</span>
+    </a>
+    <nav class="nav-links" aria-label="Secções">
+      <a href="#como">Como funciona</a>
+      <a href="#precos">Preços</a>
+      <a href="#perguntas">Perguntas</a>
+    </nav>
+    <a class="btn btn-ink nav-cta" data-wa="Olá! Quero saber mais sobre o BotMegas." href="#precos">Falar no WhatsApp</a>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Tu vendes os megas. O bot atende o grupo.</h1>
+        <p class="lead">Lê o SMS do M-Pesa e do e-Mola, diz ao cliente que está na fila, avisa-te do pedido e confirma a entrega quando escreves <b>ok</b>. Tudo dentro do teu grupo de WhatsApp, sem aplicação e sem site.</p>
+        <div class="hero-actions">
+          <a class="btn btn-sun" data-wa="Olá! Quero o BotMegas no meu grupo." href="#precos">Quero o bot no meu grupo</a>
+          <a class="btn btn-line" href="#precos">Ver preços</a>
+        </div>
+        <p class="proof" id="proof" hidden></p>
+      </div>
+
+      <figure class="phone" aria-label="Exemplo de conversa num grupo com o bot">
+        <div class="phone-top">
+          <div class="phone-avatar" aria-hidden="true">Z</div>
+          <div>
+            <div class="phone-title">Megas do Zé 🇲🇿</div>
+            <div class="phone-sub">Ana, Hélder, Sónia, BotMegas e mais 210</div>
+          </div>
+          <button class="replay" id="replay" type="button" hidden>Repetir</button>
+        </div>
+        <ol class="chat" id="chat">
+          <li class="msg in" data-step="1">
+            <span class="who c1">Ana Cossa</span>
+            <span class="sms">Confirmado DK47HJ2X9P. Transferiste 50.00MT para 841112233 - ZE aos 22/11/26 as 10:15.</span>
+            Numero: 84 555 1234<time>10:15</time>
+          </li>
+          <li class="msg in bot" data-step="2">
+            <span class="who c2">BotMegas</span>
+            ✅ <b>Comprovativo recebido!</b> Pedido <b>#48</b><br>
+            📦 1GB Vodacom → <b>84 555 1234</b><br>
+            ⏳ Estás na posição <b>2</b> da fila, cerca de <b>6 min</b>. Não precisas de reenviar.<time>10:15</time>
+          </li>
+          <li class="msg out" data-step="3">ok 48<time>10:19</time></li>
+          <li class="msg in bot" data-step="4">
+            <span class="who c2">BotMegas</span>
+            🎉 <b>Pedido #48 concluído!</b> 1GB enviado para 84 555 1234. Obrigado pela preferência 🙌<time>10:19</time>
+          </li>
+          <li class="typing" aria-hidden="true"><i></i><i></i><i></i></li>
+        </ol>
+      </figure>
+    </section>
+
+    <!-- ============ DOR ============ -->
+    <section class="pain">
+      <p class="pain-intro">Num grupo de megas sem bot, o dia é isto:</p>
+      <ul class="quotes">
+        <li>“Já mandei o comprovativo há 20 minutos!”</li>
+        <li>“Mandaste para que número?”</li>
+        <li>“Esse print está editado.”</li>
+        <li>“Paguei e ninguém responde.”</li>
+      </ul>
+      <p class="pain-answer">Com o BotMegas, cada cliente recebe resposta em segundos, cada pedido tem número e tu só tens de enviar os megas.</p>
+    </section>
+
+    <!-- ============ COMO FUNCIONA ============ -->
+    <section class="how" id="como">
+      <h2>Fica a funcionar em 2 minutos</h2>
+      <ol class="steps">
+        <li>
+          <h3>Escolhes o plano</h3>
+          <p>Pagas por M-Pesa ou e-Mola e recebes o teu código de activação no WhatsApp.</p>
+        </li>
+        <li>
+          <h3>Adicionas o bot ao grupo</h3>
+          <p>Mandamos-te o número do bot. Adicionas ao teu grupo e tornas-o administrador.</p>
+        </li>
+        <li>
+          <h3>Escreves o código no grupo</h3>
+          <p>O bot responde na hora e começa a atender.</p>
+          <div class="code-chip" aria-label="Exemplo de mensagem">!ativar MZ-7K2Q</div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ O QUE FAZ ============ -->
+    <section class="does">
+      <h2>O que o bot faz por ti</h2>
+
+      <article class="feat">
+        <div class="feat-text">
+          <h3>Lê o comprovativo sozinho</h3>
+          <p>O cliente cola o SMS e o bot tira o valor, o ID da transacção e o número que vai receber. Reconhece o pacote pelo preço e avisa-te se o dinheiro foi para outro número.</p>
+        </div>
+        <div class="feat-vis parse" aria-hidden="true">
+          <p class="raw">Confirmado <mark class="m1">DK47HJ2X9P</mark>. Transferiste <mark class="m2">50.00MT</mark> para <mark class="m3">841112233</mark>… Numero: <mark class="m4">845551234</mark></p>
+          <dl>
+            <div><dt><i class="m1"></i>Transacção</dt><dd>DK47HJ2X9P</dd></div>
+            <div><dt><i class="m2"></i>Pacote</dt><dd>1GB Vodacom</dd></div>
+            <div><dt><i class="m3"></i>Pago a</dt><dd>Tu ✓</dd></div>
+            <div><dt><i class="m4"></i>Enviar para</dt><dd>84 555 1234</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="feat flip">
+        <div class="feat-text">
+          <h3>Tu respondes com duas letras</h3>
+          <p>Recebes cada pedido no privado, com o número pronto a copiar. Envias os megas, escreves <b>ok 48</b> e o cliente é avisado no grupo. Se esqueceres algum, o bot lembra-te.</p>
+        </div>
+        <div class="feat-vis queue" aria-hidden="true">
+          <div class="q-row"><span class="q-id">#47</span><span class="q-num">86 222 3344</span><span class="q-tag done">enviado</span></div>
+          <div class="q-row now"><span class="q-id">#48</span><span class="q-num">84 555 1234</span><span class="q-tag">ok 48</span></div>
+          <div class="q-row"><span class="q-id">#49</span><span class="q-num">82 777 8899</span><span class="q-tag wait">na fila</span></div>
+        </div>
+      </article>
+
+      <article class="feat">
+        <div class="feat-text">
+          <h3>Fecha a porta aos burladores</h3>
+          <p>O mesmo comprovativo não passa duas vezes. Os clientes podem denunciar e verificar números. Quem é banido é removido do grupo e não consegue voltar a entrar.</p>
+        </div>
+        <div class="feat-vis alert" aria-hidden="true">
+          <div class="alert-card">
+            <b>🚨 Alerta de fraude</b>
+            <p>O número <b>82 666 5544</b> foi banido por comprovativos falsos. Não façam negócio com este número.</p>
+          </div>
+          <div class="alert-check"><span>verificar 82 666 5544</span><span class="bad">🚫 Banido</span></div>
+        </div>
+      </article>
+
+      <article class="feat flip">
+        <div class="feat-text">
+          <h3>Um segundo administrador</h3>
+          <p>Remove, adverte, apaga links de outros grupos, fecha o grupo à noite e faz anúncios para todos. Só tu e quem escolheres podem dar estas ordens.</p>
+        </div>
+        <div class="feat-vis cmds" aria-hidden="true">
+          <span>!remover @Hélder</span><span>!aviso Promoção hoje</span><span>!fechargrupo</span><span>!preco 2GB 85</span><span>!advertir @Tino</span><span>!antilink on</span>
+        </div>
+      </article>
+
+      <article class="feat">
+        <div class="feat-text">
+          <h3>Responde a perguntas como uma pessoa</h3>
+          <p>“Quanto custa 5GB?” “Aceitam e-Mola?” O assistente com inteligência artificial responde com os teus preços reais e nunca inventa nada. E tu podes dizer-lhe: “bot, põe o 2GB a 85”.</p>
+        </div>
+        <div class="feat-vis ai" aria-hidden="true">
+          <div class="msg in"><span class="who c3">Tino</span>tem 5gb? quanto é</div>
+          <div class="msg in bot"><span class="who c2">BotMegas</span>Tem sim! O 5GB Vodacom custa 200 MT e dura 30 dias. Paga para o M-Pesa 84 111 2233 e manda aqui o SMS 😊</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ LISTA NEGRA ============ -->
+    <section class="network">
+      <div class="network-in no-num" id="networkIn">
+        <p class="big-num" id="bannedNum">—</p>
+        <div>
+          <h2>Burlador banido num grupo fica bloqueado em todos</h2>
+          <p>A lista negra é partilhada por todos os revendedores do BotMegas. Quanto mais grupos usam o bot, mais difícil é burlar alguém.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PREÇOS ============ -->
+    <section class="pricing" id="precos">
+      <h2>Preços</h2>
+      <p class="pricing-sub">Pagas por M-Pesa ou e-Mola. Sem contrato: se não renovares, o bot simplesmente pára.</p>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <!-- ============ PERGUNTAS ============ -->
+    <section class="faq" id="perguntas">
+      <h2>Perguntas</h2>
+      <details>
+        <summary>O bot envia os megas sozinho?</summary>
+        <p>Não. O envio continua a ser feito por ti, pelo USSD. O bot trata de tudo à volta: responde ao cliente, organiza a fila, guarda os pedidos e avisa quando foi enviado.</p>
+      </details>
+      <details>
+        <summary>Preciso de dar o meu WhatsApp ou a minha senha?</summary>
+        <p>Não. O bot é um número nosso. Só o adicionas ao teu grupo. Para o tirar, basta removê-lo do grupo.</p>
+      </details>
+      <details>
+        <summary>Funciona com Vodacom, Tmcel e Movitel?</summary>
+        <p>Sim. Lê os SMS do M-Pesa, do e-Mola e do mKesh. Os pacotes e preços são os teus, e mudas quando quiseres com <b>!preco</b>.</p>
+      </details>
+      <details>
+        <summary>E se o cliente mandar um print em vez do SMS?</summary>
+        <p>O bot aceita, mas reencaminha-te o print para confirmares no teu telemóvel antes de enviar. É por isso que pede, com educação, para colarem o SMS.</p>
+      </details>
+      <details>
+        <summary>Tenho mais de um grupo. Como faço?</summary>
+        <p>Cada plano inclui um número de grupos. Usas o mesmo código em cada grupo até ao limite do plano. Para mudar de grupo, escreves <b>!desativar</b> no antigo.</p>
+      </details>
+      <details>
+        <summary>O que acontece quando a assinatura acaba?</summary>
+        <p>Três dias antes, o bot avisa-te no privado. Se não renovares, deixa de responder nos teus grupos. Quando pagas, volta a funcionar no mesmo instante, com os pedidos e as definições como estavam.</p>
+      </details>
+    </section>
+
+    <section class="closer">
+      <h2>O teu grupo pode estar a funcionar sozinho ainda hoje.</h2>
+      <a class="btn btn-sun" data-wa="Olá! Quero activar o BotMegas no meu grupo." href="#precos">Falar no WhatsApp</a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>© <span id="year"></span> BotMegas, Moçambique</span>
+    <a href="/admin">Entrar no painel</a>
+  </footer>
+
+  <script src="/site.js" type="module"></script>
 </body>
 </html>

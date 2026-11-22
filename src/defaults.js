@@ -2,7 +2,6 @@
 export const defaultConfig = phone => ({
   businessName: 'Os Meus Megas',
   admins: [phone],
-  groups: [],
   groupSettings: {},
   privateChats: true,
   replyUnknownInPrivate: true,

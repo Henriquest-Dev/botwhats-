@@ -1,27 +1,20 @@
 // Registo de fraudes: denúncias por vendedor + lista negra GLOBAL partilhada
 // por todos os vendedores do sistema (quem é banido num grupo fica marcado em todos).
-import fs from 'node:fs';
-import path from 'node:path';
 
 export class FraudRegistry {
-  constructor(file) {
-    this.file = file;
-    this.data = { banned: {}, reports: [] };
-    if (file && fs.existsSync(file)) this.data = { ...this.data, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
+  /** @param {{reports?: object[], banned?: object, onChange?: Function}} [opts] */
+  constructor(opts = null) {
+    this.data = { banned: opts?.banned || {}, reports: opts?.reports || [] };
+    this.onChange = opts?.onChange || (() => {});
   }
 
-  save() {
-    if (!this.file) return;
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(this.file + '.tmp', JSON.stringify(this.data, null, 2));
-    fs.renameSync(this.file + '.tmp', this.file);
-  }
+  save(kind, item) { this.onChange(kind, item); }
 
   /** Denúncia de um cliente/vendedor. */
   report({ tenant, phone, reason, by, byName, groupId }) {
-    const r = { id: this.data.reports.length + 1, tenant, phone, reason: reason || null, by, byName: byName || null, groupId: groupId || null, at: Date.now(), status: 'aberta' };
+    const r = { id: this.data.reports.reduce((m, x) => Math.max(m, x.id), 0) + 1, tenant, phone, reason: reason || null, by, byName: byName || null, groupId: groupId || null, at: Date.now(), status: 'aberta' };
     this.data.reports.push(r);
-    this.save();
+    this.save('report', r);
     return r;
   }
 
@@ -30,17 +23,17 @@ export class FraudRegistry {
 
   resolveReport(id, status) {
     const r = this.data.reports.find(x => x.id === Number(id));
-    if (r) { r.status = status; this.save(); }
+    if (r) { r.status = status; this.save('report', r); }
     return r;
   }
 
   ban(phone, { tenant, reason }) {
     this.data.banned[phone] = { tenant, reason: reason || null, at: Date.now() };
-    for (const r of this.data.reports) if (r.phone === phone && r.status === 'aberta') r.status = 'confirmada';
-    this.save();
+    this.save('ban', { phone, ...this.data.banned[phone] });
+    for (const r of this.data.reports) if (r.phone === phone && r.status === 'aberta') { r.status = 'confirmada'; this.save('report', r); }
   }
 
-  unban(phone) { delete this.data.banned[phone]; this.save(); }
+  unban(phone) { delete this.data.banned[phone]; this.save('unban', { phone }); }
   isBanned(phone) { return phone ? this.data.banned[phone] || null : null; }
 
   /** Resumo de risco de um número. */
