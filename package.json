@@ -1,0 +1,17 @@
+{
+  "name": "botwhats-megas",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp para gerir vendas de megas (pacotes de internet) em Moçambique",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "baileys": "7.0.0-rc14",
+    "pino": "^10.4.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

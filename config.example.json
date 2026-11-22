@@ -1,0 +1,23 @@
+{
+  "businessName": "Megas Baratos MZ",
+  "admins": ["841234567"],
+  "groups": [],
+  "privateChats": true,
+  "replyUnknownInPrivate": true,
+  "acceptImageProofs": true,
+  "paymentAccounts": [
+    { "provider": "M-Pesa", "number": "841234567", "name": "João Mabunda" },
+    { "provider": "e-Mola", "number": "861234567", "name": "João Mabunda" }
+  ],
+  "packages": [
+    { "name": "1GB Vodacom", "price": 50, "validity": "24h" },
+    { "name": "2GB Vodacom", "price": 90, "validity": "7 dias" },
+    { "name": "5GB Vodacom", "price": 200, "validity": "30 dias" },
+    { "name": "1GB Movitel", "price": 45, "validity": "24h" },
+    { "name": "10GB Movitel", "price": 350, "validity": "30 dias" }
+  ],
+  "minutesPerOrder": 3,
+  "reminderMinutes": 10,
+  "timezone": "Africa/Maputo",
+  "hours": { "open": "06:00", "close": "23:00" }
+}
