@@ -98,6 +98,15 @@ create table if not exists banned_numbers (
   created_at    timestamptz not null default now()
 );
 
+-- Sessão do WhatsApp de cada número de bot (chaves de cifra). NUNCA partilhes esta tabela.
+create table if not exists wa_auth (
+  bot_phone   text not null,
+  key         text not null,
+  value       text not null,
+  updated_at  timestamptz not null default now(),
+  primary key (bot_phone, key)
+);
+
 create table if not exists settings (
   key   text primary key,
   value jsonb not null
@@ -114,6 +123,7 @@ alter table payments       enable row level security;
 alter table fraud_reports  enable row level security;
 alter table banned_numbers enable row level security;
 alter table settings       enable row level security;
+alter table wa_auth        enable row level security;
 
 -- Planos iniciais (podes mudar no painel)
 insert into plans (id, name, price, days, max_groups, highlight, sort) values

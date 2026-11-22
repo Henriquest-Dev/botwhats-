@@ -38,6 +38,8 @@ Na demonstração, o WhatsApp é simulado e há 5 revendedores de exemplo com gr
 
 ## Pôr a funcionar a sério
 
+👉 **Guia passo a passo, grátis, no Google Cloud: [docs/GUIA-INSTALACAO.md](docs/GUIA-INSTALACAO.md)**. O resumo técnico está abaixo.
+
 ### 1. Supabase
 1. Cria um projecto em [supabase.com](https://supabase.com) (o plano grátis chega para começar).
 2. Em **SQL Editor**, cola o conteúdo de `supabase/schema.sql` e carrega em **Run**. O servidor também cria as tabelas sozinho ao arrancar.
@@ -56,7 +58,7 @@ Ou com Docker:
 docker build -t botmegas .
 docker run -d --restart=always -p 3000:3000 -v botmegas-data:/data --env-file .env --name botmegas botmegas
 ```
-A pasta `data/bots/` guarda as **sessões do WhatsApp** dos teus números. Faz backup dela: se se perder, tens de voltar a ligar os números (mais nada se perde, porque o resto está no Supabase).
+Com `DATABASE_URL` definida, as **sessões do WhatsApp** também ficam no Supabase (tabela `wa_auth`). Podes mudar de servidor sem voltar a ligar os números.
 
 ### 3. Ligar o número do bot
 Painel → **Números do bot** → escreve o número → aparece um código. No telemóvel desse número: **WhatsApp → Dispositivos ligados → Ligar um dispositivo → Ligar com número de telefone** e escreve o código.

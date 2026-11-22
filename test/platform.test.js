@@ -18,8 +18,7 @@ async function setup(repo = new JsonRepo(null)) {
   platform.saveSettings('owner', { name: 'Dono', phone: '845550000', paymentAccounts: [{ provider: 'M-Pesa', number: '845550000', name: 'Dono' }] });
   // liga um número de bot (sessão já existente)
   platform.state.botNumbers.push({ phone: BOT, status: 'desligado', createdAt: Date.now() });
-  fs.mkdirSync(path.join(dataDir, 'bots', BOT, 'auth'), { recursive: true });
-  fs.writeFileSync(path.join(dataDir, 'bots', BOT, 'auth', 'creds.json'), '{}');
+  await platform.authStore.writeMany(BOT, [{ key: 'creds', value: '{}' }]);
   await platform.startAll();
   await tick(300);
   const sock = fakeSockets.get(BOT);
@@ -160,19 +159,20 @@ test('lembrete de renovação 3 dias antes', async () => {
 });
 
 // ------------------------------------------------------------ PostgreSQL real (PGlite)
-let pgServer, pgDb;
+let pgServer, pgDb, pgPool;
 before(async () => {
   const { PGlite } = await import('@electric-sql/pglite');
   const { PGLiteSocketServer } = await import('@electric-sql/pglite-socket');
   pgDb = await PGlite.create();
   pgServer = new PGLiteSocketServer({ db: pgDb, port: 55433 });
   await pgServer.start();
+  const pg = (await import('pg')).default;
+  pgPool = new pg.Pool({ connectionString: 'postgres://postgres@127.0.0.1:55433/postgres', max: 1 });
 });
-after(async () => { await pgServer?.stop(); await pgDb?.close(); });
+after(async () => { await pgPool?.end(); await pgServer?.stop(); await pgDb?.close(); });
 
 test('Supabase/PostgreSQL: esquema, gravação e recarga dos dados', async () => {
-  const pg = (await import('pg')).default;
-  const pool = new pg.Pool({ connectionString: 'postgres://postgres@127.0.0.1:55433/postgres', max: 1 });
+  const pool = pgPool;
   const repo = new PgRepo(pool);
   await repo.migrate();
   await repo.migrate(); // pode correr duas vezes
@@ -204,6 +204,27 @@ test('Supabase/PostgreSQL: esquema, gravação e recarga dos dados', async () =>
   assert.equal(again.plans.length, 3);
 
   // comprovativo repetido é bloqueado pela base de dados também (índice único)
-  await assert.rejects(pool.query(`insert into orders (reseller_id,id,status,tx_id,created_at,data) values ($1, 99, 'pendente', 'DK47HJ2X9P', now(), '{}')`, [r.id]));
-  await pool.end();
+  const idx = await pool.query("select indexdef from pg_indexes where indexname = 'orders_tx_unique'");
+  assert.match(idx.rows[0].indexdef, /UNIQUE INDEX .* \(reseller_id, tx_id\)/);
+});
+
+test('sessão do WhatsApp guardada no Supabase/PostgreSQL', async () => {
+  const { PgAuthStore, useStoreAuthState } = await import('../src/wa-auth.js');
+  const baileys = await import('baileys');
+  const pool = pgPool;
+  await new PgRepo(pool).migrate();
+  const store = new PgAuthStore(pool);
+  assert.equal(await store.has('841000000'), false);
+  const a = await useStoreAuthState(store, '841000000', baileys);
+  await a.saveCreds();
+  await a.state.keys.set({ 'pre-key': { 1: { public: Buffer.from([1, 2, 3]), private: Buffer.from([4, 5]) }, 2: null } });
+  assert.equal(await store.has('841000000'), true);
+  // "reiniciar o servidor": ler tudo outra vez
+  const b = await useStoreAuthState(store, '841000000', baileys);
+  assert.deepEqual(b.state.creds.noiseKey.public, a.state.creds.noiseKey.public);
+  const k = await b.state.keys.get('pre-key', ['1', '2']);
+  assert.deepEqual([...k['1'].public], [1, 2, 3]);
+  assert.equal(k['2'], null);
+  await store.clear('841000000');
+  assert.equal(await store.has('841000000'), false);
 });

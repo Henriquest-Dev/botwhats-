@@ -1,7 +1,5 @@
 // Ligação de UM número de bot ao WhatsApp. Um número pode servir muitos grupos
 // de muitos revendedores. Quem decide o que fazer com cada mensagem é a Platform.
-import fs from 'node:fs';
-import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { normalizePhone } from './parser.js';
 
@@ -13,10 +11,10 @@ export const bare = jid => (jid || '').split('@')[0].split(':')[0];
 export const jidOfPhone = phone => `258${phone}@s.whatsapp.net`;
 
 export class BotConnection extends EventEmitter {
-  constructor(phone, { authDir, socketFactory, logger }) {
+  constructor(phone, { authStore, socketFactory, logger }) {
     super();
     this.phone = phone;
-    this.authDir = authDir;
+    this.authStore = authStore;
     this.socketFactory = socketFactory;
     this.logger = logger || console;
     this.status = 'desligado'; // desligado | a_ligar | aguarda_codigo | ligado | sessao_terminada
@@ -27,7 +25,7 @@ export class BotConnection extends EventEmitter {
     this.groupCache = new Map();
   }
 
-  get hasSession() { return fs.existsSync(path.join(this.authDir, 'creds.json')); }
+  hasSession() { return this.authStore.has(this.phone); }
 
   setStatus(s) { this.status = s; this.emit('status', s); }
 
@@ -35,7 +33,7 @@ export class BotConnection extends EventEmitter {
     if (this.sock) return;
     this.stopped = false;
     this.setStatus('a_ligar');
-    const sock = this.sock = await this.socketFactory(this.authDir, this.logger);
+    const sock = this.sock = await this.socketFactory({ phone: this.phone, authStore: this.authStore, logger: this.logger });
     let registered = !!sock.authState?.creds?.registered;
 
     sock.ev.on('creds.update', sock.saveCreds || (() => {}));
@@ -59,7 +57,7 @@ export class BotConnection extends EventEmitter {
         const code = lastDisconnect?.error?.output?.statusCode;
         this.sock = null;
         if (code === 401) {
-          fs.rmSync(this.authDir, { recursive: true, force: true });
+          await this.authStore.clear(this.phone).catch(() => {});
           this.pairingCode = null;
           return this.setStatus('sessao_terminada');
         }
@@ -97,7 +95,7 @@ export class BotConnection extends EventEmitter {
     this.stopped = true;
     try { await this.sock?.logout(); } catch { /* ignora */ }
     this.sock = null;
-    fs.rmSync(this.authDir, { recursive: true, force: true });
+    await this.authStore.clear(this.phone).catch(() => {});
     this.setStatus('desligado');
   }
 

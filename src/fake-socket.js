@@ -1,16 +1,12 @@
 // WhatsApp simulado, para a demonstração e testes (DEMO=1).
-import fs from 'node:fs';
-import path from 'node:path';
 import { EventEmitter } from 'node:events';
 
 export const fakeGroups = {}; // jid → { id, subject, participants }
 export const fakeSockets = new Map(); // telefone do bot → socket
 
-export async function fakeSocketFactory(authDir) {
-  const credsFile = path.join(authDir, 'creds.json');
-  const registered = fs.existsSync(credsFile);
+export async function fakeSocketFactory({ phone, authStore }) {
+  const registered = await authStore.has(phone);
   const ev = new EventEmitter();
-  const phone = path.basename(path.dirname(authDir));
   const me = `258${phone}@s.whatsapp.net`;
   const sock = {
     ev, me,
@@ -18,7 +14,7 @@ export async function fakeSocketFactory(authDir) {
     user: { id: me },
     sent: [],
     async requestPairingCode() {
-      setTimeout(() => { fs.mkdirSync(authDir, { recursive: true }); fs.writeFileSync(credsFile, '{}'); ev.emit('connection.update', { connection: 'open' }); }, 6000);
+      setTimeout(async () => { await authStore.writeMany(phone, [{ key: 'creds', value: '{}' }]); ev.emit('connection.update', { connection: 'open' }); }, 6000);
       return 'K7QD2M9X';
     },
     async sendMessage(jid, content) {
@@ -30,7 +26,7 @@ export async function fakeSocketFactory(authDir) {
     async groupMetadata(id) { return fakeGroups[id]; },
     async groupParticipantsUpdate() { return []; },
     async groupSettingUpdate() {},
-    async logout() { fs.rmSync(authDir, { recursive: true, force: true }); },
+    async logout() { await authStore.clear(phone); },
     end() {},
     /** Simula uma mensagem a chegar. */
     receive(remoteJid, text, { participant, name = 'Cliente' } = {}) {

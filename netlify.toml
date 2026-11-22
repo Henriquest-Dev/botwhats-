@@ -1,0 +1,23 @@
+# Site público do Pacotinho Já na Netlify (grátis).
+# O site fica na Netlify; os pedidos /api/* vão para o teu servidor no Google Cloud.
+# ⚠️ Troca SEU-SUBDOMINIO pelo teu subdomínio do DuckDNS (ex: pacotinhoja).
+
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://SEU-SUBDOMINIO.duckdns.org/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"

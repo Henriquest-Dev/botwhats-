@@ -1,6 +1,4 @@
 // Dados de exemplo para a demonstração (DEMO=1). Só corre se ainda não houver revendedores.
-import fs from 'node:fs';
-import path from 'node:path';
 import { fakeGroups, fakeSockets } from './fake-socket.js';
 
 const DAY = 864e5;
@@ -11,8 +9,7 @@ export async function seedDemo(platform) {
   if (st.resellers.length) return;
   platform.saveSettings('owner', { name: 'Luís', phone: '845550000', paymentAccounts: [{ provider: 'M-Pesa', number: '845550000', name: 'Luís S.' }, { provider: 'e-Mola', number: '865550000', name: 'Luís S.' }] });
   st.botNumbers.push({ phone: BOT, label: 'Bot principal', status: 'desligado', createdAt: Date.now() - 40 * DAY });
-  fs.mkdirSync(path.join(platform.dataDir, 'bots', BOT, 'auth'), { recursive: true });
-  fs.writeFileSync(path.join(platform.dataDir, 'bots', BOT, 'auth', 'creds.json'), '{}');
+  await platform.authStore.writeMany(BOT, [{ key: 'creds', value: '{}' }]);
 
   const people = [
     ['Zé dos Megas', '841112233', 'mensal', 22], ['Megas Baratos Matola', '862223344', 'pro', 11],

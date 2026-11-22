@@ -201,6 +201,10 @@ export function createServer(platform, { adminPassword, sessionSecret, secureCoo
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'same-origin');
     try {
+      if (url.pathname === '/api/health') {
+        const bots = [...platform.connections.values()].map(c => ({ phone: c.phone, status: c.status }));
+        return json(res, 200, { ok: true, uptime: Math.round(process.uptime()), bots });
+      }
       if (url.pathname.startsWith('/api/public/')) return await publicApi(req, res, url.pathname);
       if (url.pathname.startsWith('/api/admin/')) return await adminApi(req, res, url);
       let rel = url.pathname === '/' ? 'index.html' : url.pathname === '/admin' || url.pathname === '/admin/' ? 'admin.html' : url.pathname;

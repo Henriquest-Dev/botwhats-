@@ -7,6 +7,7 @@ import { AIClient } from './ai.js';
 import { JsonRepo, PgRepo } from './repo.js';
 import { Platform } from './platform.js';
 import { createServer } from './server.js';
+import { FileAuthStore, PgAuthStore, useStoreAuthState } from './wa-auth.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const dataDir = process.env.DATA_DIR || path.join(ROOT, 'data');
@@ -22,10 +23,10 @@ if (demo) {
 } else {
   const baileys = await import('baileys');
   const makeWASocket = baileys.default;
-  const { useMultiFileAuthState, fetchLatestBaileysVersion, Browsers } = baileys;
+  const { fetchLatestBaileysVersion, Browsers } = baileys;
   let version;
-  socketFactory = async (authDir, log) => {
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+  socketFactory = async ({ phone, authStore, logger: log }) => {
+    const { state, saveCreds } = await useStoreAuthState(authStore, phone, baileys);
     version ||= (await fetchLatestBaileysVersion().catch(() => ({}))).version;
     const sock = makeWASocket({ auth: state, logger: log, version, browser: Browsers.ubuntu('Chrome'), markOnlineOnConnect: false });
     sock.saveCreds = saveCreds;
@@ -48,7 +49,10 @@ if (process.env.DATABASE_URL && !demo) {
 const ai = new AIClient({ baseURL: process.env.AI_BASE_URL, apiKey: process.env.AI_API_KEY || process.env.NVIDIA_API_KEY, model: process.env.AI_MODEL });
 console.log(ai.enabled ? `🤖 IA activa (${ai.model})` : '🤖 IA desligada (define NVIDIA_API_KEY)');
 
-const platform = await new Platform({ repo, socketFactory, dataDir, ai, logger }).init();
+// Sessões do WhatsApp: no Supabase se houver DATABASE_URL (sobrevivem a reinícios e mudanças de servidor)
+const authStore = repo instanceof PgRepo ? new PgAuthStore(repo.pool) : new FileAuthStore(path.join(dataDir, 'bots'));
+
+const platform = await new Platform({ repo, socketFactory, dataDir, authStore, ai, logger }).init();
 if (demo) {
   const { seedDemo, simulateTraffic } = await import('./demo.js');
   await seedDemo(platform);

@@ -11,6 +11,7 @@ import { BotConnection, phoneOf, jidOfPhone } from './connection.js';
 import { normalizePhone } from './parser.js';
 import { defaultConfig } from './defaults.js';
 import { fmtMT } from './messages.js';
+import { FileAuthStore } from './wa-auth.js';
 
 const DAY = 24 * 3600 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -26,8 +27,9 @@ export class Platform {
    * @param {object} [o.ai]
    * @param {Function} [o.now]
    */
-  constructor({ repo, socketFactory, dataDir, ai = null, now = () => Date.now(), logger }) {
+  constructor({ repo, socketFactory, dataDir, authStore, ai = null, now = () => Date.now(), logger }) {
     this.repo = repo;
+    this.authStore = authStore || new FileAuthStore(path.join(dataDir, 'bots'));
     this.socketFactory = socketFactory;
     this.dataDir = dataDir;
     this.ai = ai;
@@ -61,7 +63,7 @@ export class Platform {
   async startAll() {
     for (const b of this.state.botNumbers) {
       const c = this.connection(b.phone);
-      if (c.hasSession) c.start().catch(e => console.error(`[bot ${b.phone}]`, e.message));
+      if (await c.hasSession()) c.start().catch(e => console.error(`[bot ${b.phone}]`, e.message));
     }
   }
 
@@ -123,7 +125,7 @@ export class Platform {
   connection(phone) {
     let c = this.connections.get(phone);
     if (c) return c;
-    c = new BotConnection(phone, { authDir: path.join(this.dataDir, 'bots', phone, 'auth'), socketFactory: this.socketFactory, logger: this.logger });
+    c = new BotConnection(phone, { authStore: this.authStore, socketFactory: this.socketFactory, logger: this.logger });
     c.on('status', s => {
       const b = this.state.botNumbers.find(x => x.phone === phone);
       if (b) { b.status = s; b.pairingCode = c.pairingCode; this.repo.saveBotNumber(b); }
