@@ -38,7 +38,7 @@ Na demonstração, o WhatsApp é simulado e há 5 revendedores de exemplo com gr
 
 ## Pôr a funcionar a sério
 
-👉 **Guia passo a passo, grátis, no Google Cloud: [docs/GUIA-INSTALACAO.md](docs/GUIA-INSTALACAO.md)**. O resumo técnico está abaixo.
+👉 **Guias passo a passo, grátis:** [Oracle Cloud (VPS em Joanesburgo)](docs/GUIA-ORACLE.md) · [Google Cloud](docs/GUIA-INSTALACAO.md). O resumo técnico está abaixo.
 
 ### 1. Supabase
 1. Cria um projecto em [supabase.com](https://supabase.com) (o plano grátis chega para começar).

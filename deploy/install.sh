@@ -10,13 +10,13 @@ APP_USER="${SUDO_USER:-$(stat -c %U "$APP_DIR")}"
 ENV_FILE=/etc/pacotinho.env
 say() { printf "\n\033[1;34m▶ %s\033[0m\n" "$*"; }
 
-say "1/7  Memória extra (swap de 2 GB), para a máquina pequena não ficar sem memória"
+say "1/8  Memória extra (swap de 2 GB), para a máquina pequena não ficar sem memória"
 if ! swapon --show | grep -q /swapfile; then
   fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
   grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
-say "2/7  Programas base (Node.js 22, git, Caddy para o https)"
+say "2/8  Programas base (Node.js 22, git, Caddy para o https)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq curl git ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https >/dev/null
@@ -31,7 +31,24 @@ if ! command -v caddy >/dev/null; then
 fi
 echo "Node $(node -v), Caddy $(caddy version | cut -d' ' -f1)"
 
-say "3/7  Configuração (fica guardada em $ENV_FILE, só o administrador consegue ler)"
+say "3/8  Firewall da máquina: abrir as portas 80 e 443 (necessário na Oracle Cloud)"
+if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then
+  ufw allow 80/tcp >/dev/null; ufw allow 443/tcp >/dev/null
+fi
+if command -v iptables >/dev/null && iptables -S INPUT 2>/dev/null | grep -q -- "-j REJECT"; then
+  for port in 80 443; do
+    if ! iptables -C INPUT -p tcp -m state --state NEW --dport "$port" -j ACCEPT 2>/dev/null; then
+      pos="$(iptables -L INPUT --line-numbers -n | awk '$2=="REJECT"{print $1; exit}')"
+      iptables -I INPUT "$pos" -p tcp -m state --state NEW --dport "$port" -j ACCEPT
+    fi
+  done
+  if command -v netfilter-persistent >/dev/null; then netfilter-persistent save >/dev/null 2>&1 || true; fi
+  echo "Portas 80 e 443 abertas na firewall da máquina."
+else
+  echo "Nada a fazer aqui."
+fi
+
+say "4/8  Configuração (fica guardada em $ENV_FILE, só o administrador consegue ler)"
 get() { grep -E "^$1=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true; }
 ask() { # ask VAR "pergunta" [secreto]
   local cur; cur="$(get "$1")"
@@ -63,7 +80,7 @@ SESSION_SECRET=$SESSION_SECRET
 CONF
 chmod 600 "$ENV_FILE"; umask 022
 
-say "4/7  Endereço grátis: $DUCKDNS_DOMAIN.duckdns.org (actualizado a cada 5 minutos)"
+say "5/8  Endereço grátis: $DUCKDNS_DOMAIN.duckdns.org (actualizado a cada 5 minutos)"
 cat > /usr/local/bin/pacotinho-duckdns <<'DD'
 #!/bin/sh
 . /etc/pacotinho.env
@@ -73,11 +90,11 @@ chmod 700 /usr/local/bin/pacotinho-duckdns
 echo "*/5 * * * * root /usr/local/bin/pacotinho-duckdns" > /etc/cron.d/pacotinho-duckdns
 if ! /usr/local/bin/pacotinho-duckdns; then echo "⚠️  O DuckDNS recusou. Confirma o subdomínio e o token."; fi
 
-say "5/7  A instalar o Pacotinho Já em $APP_DIR"
+say "6/8  A instalar o Pacotinho Já em $APP_DIR"
 cd "$APP_DIR"
 sudo -u "$APP_USER" npm ci --omit=dev --no-audit --no-fund --loglevel=error
 
-say "6/7  Serviço que arranca sozinho e se reinicia se cair"
+say "7/8  Serviço que arranca sozinho e se reinicia se cair"
 cat > /etc/systemd/system/pacotinho.service <<SVC
 [Unit]
 Description=Pacotinho Ja (bot de WhatsApp + painel)
@@ -100,7 +117,7 @@ systemctl daemon-reload
 systemctl enable --now pacotinho >/dev/null
 systemctl restart pacotinho
 
-say "7/7  https automático com o Caddy"
+say "8/8  https automático com o Caddy"
 cat > /etc/caddy/Caddyfile <<CADDY
 $DUCKDNS_DOMAIN.duckdns.org {
   encode gzip

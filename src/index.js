@@ -23,12 +23,14 @@ if (demo) {
 } else {
   const baileys = await import('baileys');
   const makeWASocket = baileys.default;
-  const { fetchLatestBaileysVersion, Browsers } = baileys;
+  const { fetchLatestBaileysVersion, Browsers, makeCacheableSignalKeyStore } = baileys;
   let version;
   socketFactory = async ({ phone, authStore, logger: log }) => {
     const { state, saveCreds } = await useStoreAuthState(authStore, phone, baileys);
     version ||= (await fetchLatestBaileysVersion().catch(() => ({}))).version;
-    const sock = makeWASocket({ auth: state, logger: log, version, browser: Browsers.ubuntu('Chrome'), markOnlineOnConnect: false });
+    // As chaves ficam também em memória: menos idas ao Supabase, respostas mais rápidas
+    const auth = { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, log) };
+    const sock = makeWASocket({ auth, logger: log, version, browser: Browsers.ubuntu('Chrome'), markOnlineOnConnect: false });
     sock.saveCreds = saveCreds;
     return sock;
   };
