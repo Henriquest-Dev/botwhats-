@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const EMPTY = () => ({ nextId: 1, orders: [], usedTx: {}, drafts: {}, paused: false });
+const EMPTY = () => ({ nextId: 1, orders: [], usedTx: {}, drafts: {}, warnings: {}, paused: false });
 
 export class Store {
   constructor(file) {
@@ -55,6 +55,15 @@ export class Store {
     return d;
   }
   clearDraft(userKey) { delete this.data.drafts[userKey]; this.save(); }
+
+  addWarning(groupId, who) {
+    this.data.warnings ||= {};
+    const g = (this.data.warnings[groupId] ||= {});
+    g[who] = (g[who] || 0) + 1;
+    this.save();
+    return g[who];
+  }
+  resetWarnings(groupId, who) { if (this.data.warnings?.[groupId]) { delete this.data.warnings[groupId][who]; this.save(); } }
 
   setPaused(v) { this.data.paused = v; this.save(); }
 }

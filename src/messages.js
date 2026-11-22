@@ -95,14 +95,50 @@ export const T = {
     ? `📋 *Fila (${list.length}):*\n` + list.map(o => `• #${o.id} — ${o.packageName || fmtMT(o.amount ?? 0)} → *${o.targetPhone}*${o.needsReview ? ' ⚠️' : ''}`).join('\n')
     : '✅ Fila vazia, nenhum pedido pendente.',
 
-  adminHelp: [
-    '🛠️ *Comandos do vendedor:*',
-    '• *ok 12* — marca o pedido 12 como enviado (avisa o cliente)',
-    '• *ok 12 13 14* — vários de uma vez',
-    '• *rejeitar 12 motivo* — rejeita o pedido',
-    '• *fila* — ver pedidos pendentes',
-    '• *pedido 12* — detalhes de um pedido',
-    '• *vendas* — resumo de hoje',
-    '• *pausar* / *retomar* — pausa ou retoma as vendas',
+  fraudAlert: (phone, reason) => [
+    '🚨 *ALERTA DE FRAUDE* 🚨',
+    '',
+    `O número *${phone}* foi *banido* por fraude${reason ? `: ${reason}` : ''}.`,
+    'Não façam negócio com este número. Em caso de dúvida, escrevam *verificar 84XXXXXXX*.',
   ].join('\n'),
+
+  riskReport: (r) => {
+    const head = { limpo: '✅ *Sem registos*', suspeito: '⚠️ *Suspeito*', alto: '🔴 *Risco alto*', banido: '🚫 *BANIDO*' }[r.level];
+    return [
+      `🔎 Verificação de *${r.phone}*: ${head}`,
+      r.reports ? `• ${r.reports} denúncia(s) de ${r.sellers} vendedor(es)` : '• Nenhuma denúncia registada',
+      r.banned?.reason ? `• Motivo do banimento: ${r.banned.reason}` : null,
+      r.level === 'limpo' ? '_Isto não garante que o número é de confiança. Paga sempre só a vendedores conhecidos._' : '❗ Cuidado ao negociar com este número.',
+    ].filter(Boolean).join('\n');
+  },
+
+  adminHelp: [
+    '🛠️ *Comandos do administrador*',
+    '',
+    '*Pedidos*',
+    '• *ok 12* (ou *ok 12 13 14*) — marca como enviado e avisa o cliente',
+    '• *rejeitar 12 motivo* — rejeita o pedido',
+    '• *fila* · *pedido 12* · *vendas*',
+    '• *pausar* / *retomar* — pausa ou retoma as vendas',
+    '',
+    '*Tabela de preços*',
+    '• *!preco 1GB Vodacom 50 | 24h* — cria ou muda um pacote',
+    '• *!removerpacote 1GB Vodacom*',
+    '',
+    '*Grupo*',
+    '• *!remover @pessoa* (ou responde à mensagem dela)',
+    '• *!adicionar 84XXXXXXX*',
+    '• *!advertir @pessoa motivo* — 3 advertências = removido',
+    '• *!fechargrupo* / *!abrirgrupo*',
+    '• *!aviso texto* — anúncio que menciona todos',
+    '• *!antilink on|todos|off*',
+    '• *!boasvindas Olá {nome}! {menu}* (ou *off*)',
+    '• *!ia on|off*',
+    '',
+    '*Fraudes*',
+    '• *!banir 84XXXXXXX motivo* — lista negra + remove dos grupos + alerta',
+    '• *!desbanir 84XXXXXXX* · *!denuncias*',
+    '',
+    '🤖 Também podes falar com a IA: "@bot muda o preço do 2GB para 85"',
+].join('\n'),
 };
